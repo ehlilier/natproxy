@@ -3,7 +3,11 @@
 
 import logging
 import time
+
+# 专注于 IO多路复用 可以实现一个可并发的服务器
 import select
+
+# 用于类的序列化和反序列化
 import json
 from master import *
 import server_pool
@@ -12,16 +16,18 @@ from master2 import *
 import socket
 
 
-
 class EventLoop(object):
 
     def __init__(self):
         self._stopping = False
 
+        # 创建一个socket AF_INET指定使用IPv4,SOCK_STREAM
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conn_rd =[sock]
 
+        #用来保存端口信息
         self.portdict = {}
+        #根本不知道这两个东西是干什么的 其他地方引入进来的
         self.socketbridge = SocketBridge()
         self.socketbridge.start_as_daemon()
 
@@ -34,6 +40,7 @@ class EventLoop(object):
         exists = self.portdict.keys()
         for cur in exists:
             logging.info("loop dispose port {}".format(cur))
+            # dispose() 函数是什么
             self.portdict[cur].dispose()
 
 
@@ -44,12 +51,15 @@ class EventLoop(object):
             try:
                 f = open('config.json', 'r')
                 configs = json.load(f)
+                #获取http的配置
                 http = configs['http']
+                #获取tcp的配置
                 tcp = configs['tcp']
 
                 check = {}
 
                 if http:
+                    # 抽取主机地址和端口号
                     host, port = http['customer'].split(":")
                     if self.portdict.get(port) is None:
                         self.portdict[port] = http_service(http)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 from common_func import *
+# 实现了各种多生产者，多消费者队列，被用来实现多线程程序的信息安全交换。
 import queue
 import threading
 

@@ -1,22 +1,46 @@
 #!/usr/bin/env python3
 # coding=utf-8
+
+# 可以在当前版本下使用一些未来版本的新特性 为了更好的兼容新版本的代码
 from __future__ import print_function, unicode_literals, division, absolute_import
+
+# 主要包括一些系统的功能，比如可以从程序外部向程序传递参数
 import sys
 import time
+
+# 二进制和ASCII的转换
 import binascii
+
+# 对python基本类型值与用python字符串格式表示的C struct类型间的转化
+# 可以对数据打包和解包
 import struct
+
+# 提供了许多有用的集合类 可以根据需要选用，一个没看见
 import collections
+
+# 日志处理方式
 import logging
+
+# 套接字编程 许多函数可供使用
 import socket
+
+# 专注于IO多路复用 可以实现一个并发的服务器
 import select
+
+# 线程控制相关的细节
 import threading
+
+# 用来跟踪异常返回信息
 import traceback
+
+# 一些Python高阶函数相关的函数
 import functools
 
+# 自己定义的模块
 import server_pool
 
 try:
-    # for pycharm type hinting
+    # for pycharm type hinting 返回值的类型暗示
     from typing import Union, Callable
 except:
     pass
@@ -33,6 +57,8 @@ RECV_BUFFER_SIZE = 2 ** 14
 #   so, theoretically, spare slaver never timeout,
 #   except network failure
 # notice: working slaver would NEVER timeout
+
+# 跳数限制，至多可以经过多少个路由器，但一般最大为255啊，这里怎么设置成了300？
 SPARE_SLAVER_TTL = 300
 
 # internal program version, appears in CtrlPkg
@@ -89,7 +115,7 @@ def try_close(closable):
     except:
         pass
 
-
+# 返回接受的数据 以字符串的形式表示 
 def select_recv(conn, buff_size, timeout=None):
     """add timeout for socket.recv()
     :type conn: socket.SocketType
@@ -115,6 +141,7 @@ class SocketBridge:
     """
 
     def __init__(self):
+        # 一组key的集合 但不存储value，而且key不能重复
         self.conn_rd = set()  # record readable-sockets
         self.map = {}  # record sockets pairs
         self.callbacks = {}  # record callbacks
@@ -145,7 +172,8 @@ class SocketBridge:
             self.callbacks[conn1] = callback
 
         if tmp is not None:
-            conn2.send(tmp)
+            # 这里直接发送数据？
+            conn2.send(tmp) 
             logging.info("tmp send:{}".format(len(tmp)))
 
 
@@ -153,13 +181,17 @@ class SocketBridge:
         return self.tmp_thread
 
     def start_as_daemon(self):
+        # 启动一个线程就是把一个函数传入并创建Thread实例，然后调用start()开始执行
         t = threading.Thread(target=self.start)
+        # 设置为守护线程  什么意思
+        # 守护子线程会等待主线程运行完毕后被销毁
         t.daemon = True
         t.start()
         log.info("SocketBridge daemon started")
         self.tmp_thread = t;
         # return t
 
+    # 这个start函数就是创建本线程时所传入的参数
     def start(self):
         server_pool.ServerPool.bridgeAdd += 1
         while True:
@@ -191,6 +223,7 @@ class SocketBridge:
                     #   recv data directly into the pre-allocated buffer
                     #   to avoid many unnecessary malloc()
                     # see https://docs.python.org/3/library/socket.html#socket.socket.recv_into
+                    # returns the number of bytes received. 字符串的长度
                     rec_len = s.recv_into(buff, RECV_BUFFER_SIZE)
 
                     # agre = "http"
@@ -224,6 +257,7 @@ class SocketBridge:
             self.conn_rd.remove(conn)
 
         try:
+            # shutdown和close的区别
             conn.shutdown(socket.SHUT_RD)
         except:
             pass
@@ -276,6 +310,7 @@ class SocketBridge:
         # ------ callback --------
         # because we are not sure which socket are assigned to callback,
         #   so we should try both
+        # 上面有定义哦  别忘记了  在连接关闭了之后，再执行相应的回调函数
         if conn in self.callbacks:
             try:
                 self.callbacks[conn]()
@@ -300,11 +335,12 @@ class CtrlPkg:
     SECRET_KEY_CRC32 = 0# = binascii.crc32(SECRET_KEY.encode('utf-8')) & 0xffffffff
     SECRET_KEY_REVERSED_CRC32 = 0# = binascii.crc32(SECRET_KEY[::-1].encode('utf-8')) & 0xffffffff
 
-    # Package Type
+    # Package Type 握手包啊  这就是传说中的握手包
     PTYPE_HS_S2M = -1  # handshake pkg, slaver to master
     PTYPE_HEART_BEAT = 0  # heart beat pkg
     PTYPE_HS_M2S = +1  # handshake pkg, Master to Slaver
 
+    # 将这些包的信息保存在一个map结构中
     TYPE_NAME_MAP = {
         PTYPE_HS_S2M: "PTYPE_HS_S2M",
         PTYPE_HEART_BEAT: "PTYPE_HEART_BEAT",
@@ -314,6 +350,8 @@ class CtrlPkg:
     # formats
     # see https://docs.python.org/3/library/struct.html#format-characters
     #   for format syntax
+    # 疑问的地方  怎么用，什么含义 主要是结合struct类型使用
+    # 具体细节之后在详细了解咯
     FORMAT_PKG = "!b b H 20x 40s"
     FORMATS_DATA = {
         PTYPE_HS_S2M: "!I 36x",
@@ -340,6 +378,7 @@ class CtrlPkg:
         else:
             self._build_bytes()
 
+    # @property装饰器就是负责把一个方法变成属性调用
     @property
     def type_name(self):
         """返回人类可读的包类型"""
@@ -357,6 +396,7 @@ class CtrlPkg:
         return self.__str__()
 
     def _build_bytes(self):
+        # 创建字节包咯
         self.raw = struct.pack(
             self.FORMAT_PKG,
             self.pkg_ver,
@@ -376,6 +416,8 @@ class CtrlPkg:
 
     def recalc_crc32(cls,skey):
         cls.skey = skey
+        # binascii.crc32() 循环冗余校验和 `& 0xffffffff`是为了跨平台的使用
+        # CRC校验和是为了保证数据传输过程中数据的完整性和正确性
         cls.SECRET_KEY_CRC32 = binascii.crc32(skey.encode('utf-8')) & 0xffffffff
         cls.SECRET_KEY_REVERSED_CRC32 = binascii.crc32(skey[::-1].encode('utf-8')) & 0xffffffff
         logging.info("main key:{},id:{},{},{}".format(cls.skey,id(cls),cls.SECRET_KEY_CRC32,cls.SECRET_KEY_REVERSED_CRC32))
