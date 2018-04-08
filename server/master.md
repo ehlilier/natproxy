@@ -20,4 +20,12 @@
         3. _listen_customer 和上面函数的区别是什么呢？ 做法一致 但是多了一步
             pending_customers 是一个队列，客户端的连接还未被指定为slaver 有注释
         4. try_bind_port 绑定端口号 关键点在于 sock.bind(addr)
+
+        5. _heart_beat_daemon 心跳包。看注释就可以了。通信过程咯
+        6. _send_heartbeat() 心跳开始哦 也就是发送数据给远端主机啦
+            回顾两个函数： pkg.pbuild_heart_beat().raw
+            pkg.recv()
+
+        7. _assign_slaver_daemon()  守护子线程
+        8. _get_an_active_slaver()
 --Master_line
