@@ -9,6 +9,7 @@ import threading
 # __author__ = "Aploium <i@z.codes>"
 # __website__ = "https://github.com/aploium/shootback"
 
+# 难道这个是已经过期了的API？
 local = threading.local()
 
 class Master:
