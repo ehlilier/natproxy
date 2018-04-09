@@ -273,10 +273,12 @@ class Master:
 
         log.debug("CtrlPkg key{},{}".format(self.pkg.SECRET_KEY_CRC32,self.pkg.SECRET_KEY_REVERSED_CRC32))
 
+        # 返回接受的数据啊
         buff = select_recv(conn_slaver, CtrlPkg.PACKAGE_SIZE, 2)
         if buff is None:
             return False
 
+        # 对返回的数据进行解包处理
         pkg, verify = self.pkg.decode_verify(buff, CtrlPkg.PTYPE_HS_S2M)  # type: CtrlPkg,bool
 
         log.debug("CtrlPkg from slaver {}: {}".format(conn_slaver.getpeername(), pkg))
@@ -285,6 +287,7 @@ class Master:
 
     def _get_an_active_slaver(self):
         """get and activate an slaver for data transfer"""
+        # 这个是什么意思？
         try_count = 10
         while not self._stopped['stop']:
             try:
@@ -352,12 +355,16 @@ class Master:
     def _listen_slaver(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.try_bind_port(sock, self.communicate_addr)
+        # 使服务器的这个端口和IP处于监听状态  等待网络中的某一客户机的连接请求 10为最大连接要求
         sock.listen(10)
+        # _listening_sockets是一个数组，保存着socket
         self._listening_sockets.append(sock)
         log.info("Listening for slavers: {}".format(
             fmt_addr(self.communicate_addr)))
         while not self._stopped['stop']:
             logging.info("_listen_slaver stop:{},{}".format(id(self._stopped),self._stopped))
+            # 接受远程计算机的连接请求，建立起与客户机之间的通信连接
+            # conn 是新的套接字对象，可以用来接受和发送数据。addr是连接客户端的地址
             conn, addr = sock.accept()
             self.slaver_pool.append({
                 "addr_slaver": addr,
