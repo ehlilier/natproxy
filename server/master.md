@@ -42,14 +42,18 @@ Master
 
         11. dispose() 出掉连接 一个一个销毁，很恐怖的样子
         12. serve_forever()  启动线程
+        
 总结：所以Master类主要做了些什么呢？创建了几个线程，实现数据传输过程中握手，建立连接，发送数据等过程。
 
 Master_line:
+
     属性：
         1. 主要是Master中的属性
+
     函数：
         1. dispose 用于撤销操作
         2. run_master 用于启动线程
         3. main_master 为一些属性复制
+
 总结：主要用来执行Master吧
 --Master_line
