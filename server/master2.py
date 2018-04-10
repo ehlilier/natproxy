@@ -433,6 +433,7 @@ class HttpBridge:
             # blocks until there is socket(s) ready for .recv
             # notice: sockets which were closed by remote,
             #   are also regarded as read-ready by select()
+            # select监控可读的文件列表  并返回已经准备好的列表
             r, w, e = select.select(self.conn_rd, [], [], 0.5)
 
             for s in r:  # iter every read-ready or closed sockets
@@ -444,7 +445,7 @@ class HttpBridge:
                     buff = bytearray(RECV_BUFFER_SIZE)
                     rec_len = s.recv_into(buff, RECV_BUFFER_SIZE)
 
-                    agre = self.agre
+                    agre = self.agre 
                     buffdata = buff[:rec_len]
                     infoss = buffdata.decode('utf-8')
                     heads = httphead(infoss)
